@@ -203,7 +203,7 @@ foreach ($tipos as $tipo){
     </div>
   </div>
 
-  <a href="./php/logout.php" class="btn btn-danger position-fixed" style="right: 40px; bottom: 40px; border-radius:0.5rem; z-index:9999;">Cerrar sesión</a>
+  <a href="./php/cerrar_sesion.php" class="btn btn-danger position-fixed" style="right: 40px; bottom: 40px; border-radius:0.5rem; z-index:9999;">Cerrar sesión</a>
 
   <script src="./bootstrap-5.0.2-dist/js/bootstrap.bundle.js"></script>
 </body>
