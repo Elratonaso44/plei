@@ -4,10 +4,11 @@
 
 include "../conesion.php";
 
-$resultado = mysqli_query($con, "SELECT id_persona, nombre, apellido, t.tipo 
-    FROM personas AS p 
-    INNER JOIN tipo_persona_x_persona AS t ON t.id_tipo_persona = p.id_persona 
-    WHERE t.tipo = 'Docente'");
+$resultado = mysqli_query($con, "SELECT p.dni, p.apellido, p.nombre, t.tipo, t.id_tipo_persona, p.id_persona
+FROM personas AS p
+INNER JOIN tipo_persona_x_persona as ti on ti.id_persona=p.id_persona
+INNER JOIN tipos_personas as t on t.id_tipo_persona=ti.id_tipo_persona
+WHERE t.tipo = 'docente'");
 $docentes = [];
 
 if ($resultado){
@@ -18,12 +19,7 @@ if ($resultado){
 
 
 $resultado = mysqli_query($con, 
-"SELECT m.id_materia, m.nombre_materia, c.grado, s.seccion, mo.moda, m.grupo, m.turno
- FROM materias AS m
- INNER JOIN cursos AS c ON m.id_curso = c.id_curso
- INNER JOIN secciones AS s ON c.id_seccion = s.id_seccion
- INNER JOIN modalidad AS mo ON c.id_modalidad = mo.id_modalidad
- ");
+"SELECT * from materias");
 
 $materias = [];
 

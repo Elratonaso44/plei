@@ -1,6 +1,19 @@
 <?php
 include "../conesion.php";
 
+$resultado = mysqli_query($con, "SELECT * from cursos as c
+inner join modalidad as m on c.id_modalidad = m.id_modalidad
+INNER JOIN secciones as s on c.id_seccion = s.id_seccion");
+
+$cursos = [];
+
+if($resultado){
+  while($curso = mysqli_fetch_assoc($resultado)){
+    $cursos[] = $curso;
+  }
+
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $nombre = $_POST['nombre'];
     $turno = $_POST['turno'];
@@ -17,7 +30,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
 }
 
-$cursos = mysqli_query($con, "SELECT * FROM cursos");
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -44,9 +56,9 @@ $cursos = mysqli_query($con, "SELECT * FROM cursos");
         <div class="mb-4">
           <select name="id_curso" class="form-select" required>
             <option value="">Seleccione un curso</option>
-            <?php while ($curso = mysqli_fetch_assoc($cursos)) { ?>
+            <?php foreach($cursos as $curso) { ?>
                 <option value="<?php echo $curso['id_curso']; ?>">
-                    <?php echo $curso['grado'] . "° -ID: " . $curso['id_curso']; ?>
+                    <?php echo $curso['grado']."°" .$curso['seccion'] . " -ID: " . $curso['id_curso'] . " | ". $curso['moda']; ?>
                 </option>
             <?php } ?>
           </select>

@@ -16,19 +16,20 @@
 
       
       if ($resultado) { 
-        $fila_encontrada = mysqli_fetch_assoc($resultado);
+        $informacion = mysqli_fetch_assoc($resultado);
 
-        if (!$fila_encontrada) {
+        if (!$informacion) {
           echo 'Usuario no encontrado';
-        } else if ($fila_encontrada && $password != $fila_encontrada['password'])
+        } else if ($informacion && $password != $informacion['password'])
         {
           echo 'Contraseña incorrecta.';
         } else {
-          $_SESSION['username'] = $fila_encontrada['usuario'];
-          $_SESSION['nombre'] = $fila_encontrada['nombre'];
-          $_SESSION['apellido'] = $fila_encontrada['apellido'];
-          $_SESSION['id_persona']= $fila_encontrada['id_persona'];
-          $_SESSION['rol'] = $fila_encontrada['rol'];
+          $_SESSION['username'] = $informacion['usuario'];
+          $_SESSION['nombre'] = $informacion['nombre'];
+          $_SESSION['apellido'] = $informacion['apellido'];
+          $_SESSION['id_persona']= $informacion['id_persona'];
+          $_SESSION['rol'] = $informacion['rol'];
+          $_SESSION['tipo'] = $informacion['tipo'];
           echo 'Usuario logueado.';
           header("Location:http://localhost/Dinamica/practica/home.php");
         }

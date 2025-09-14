@@ -2,7 +2,7 @@
 
 include '../conesion.php';
 
-$resultado = mysqli_query($con, "SELECT moda from modalidad");
+$resultado = mysqli_query($con, "SELECT * from modalidad");
 $modalidades = [];
 
 if($resultado){
@@ -39,12 +39,17 @@ if($resultado){
         <thead>
           <tr>
             <th>Modalidad</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           <?php foreach ($modalidades as $modalidad){ ?>
           <tr>
             <td><?php echo htmlspecialchars($modalidad['moda']); ?></td>
+            <td class="text-center">
+                <a href="../modificaciones/editar_modalidad.php?id=<?= urlencode($modalidad['id_modalidad']) ?>" class="btn btn-sm btn-warning me-2">Modificar</a>
+                <a href="../modificaciones/eliminar_modalidad.php?id=<?= urlencode($modalidad['id_modalidad']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que quieres eliminar esta modalidad?');">Eliminar</a>
+              </td>
           </tr>
           <?php } ?>
         </tbody>

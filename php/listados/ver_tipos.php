@@ -42,6 +42,7 @@ include "../conesion.php";
           <tr>
             <th>ID</th>
             <th>Tipo</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -49,6 +50,10 @@ include "../conesion.php";
           <tr>
             <td><?php echo htmlspecialchars($tipo['id_tipo_persona']); ?></td>
             <td><?php echo htmlspecialchars($tipo['tipo']); ?></td>
+            <td>
+              <a href="../modificaciones/editar_tipo.php?id=<?php echo urlencode($tipo['id_tipo_persona']); ?>" class="btn btn-warning btn-sm">Modificar</a>
+              <a href="../modificaciones/eliminar_tipo.php?id=<?php echo urlencode($tipo['id_tipo_persona']); ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que desea eliminar este tipo de persona?');">Eliminar</a>
+            </td>
           </tr>
           <?php } ?>
         </tbody>

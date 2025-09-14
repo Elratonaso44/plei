@@ -4,12 +4,7 @@ include "../conesion.php";
 
 
 $resultado = mysqli_query($con, 
-"SELECT m.id_materia, m.nombre_materia, c.grado, s.seccion, mo.moda, m.grupo, m.turno
- FROM materias AS m
- INNER JOIN cursos AS c ON m.id_curso = c.id_curso
- INNER JOIN secciones AS s ON c.id_seccion = s.id_seccion
- INNER JOIN modalidad AS mo ON c.id_modalidad = mo.id_modalidad
- ");
+"SELECT * FROM materias");
 
 $materias = [];
 

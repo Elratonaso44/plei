@@ -35,7 +35,6 @@
   VALUES ('$dni', '$apellido','$nombre','$email','$user','$pass', '$rol')");
 
   $ultimo_id=mysqli_insert_id($con); 
-  echo "<script> alert($tipo)</script>";
  
   mysqli_query($con, "INSERT INTO tipo_persona_x_persona 
   (id_persona, id_tipo_persona) VALUES ('$ultimo_id','$tipo')");
