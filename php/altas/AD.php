@@ -1,6 +1,5 @@
 <?php 
 
-//Docentes_x_materia, le puse AD.php para que el nombre sea mas corto.
 
 include "../conesion.php";
 

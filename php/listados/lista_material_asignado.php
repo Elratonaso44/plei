@@ -12,8 +12,9 @@ $id_alumno = $_SESSION['id_persona'];
 
 $resultado= mysqli_query($con, "SELECT m.id_materia 
 FROM materias AS m 
-INNER JOIN alumnos_x_curso AS axc ON axc.id_curso = m.id_curso 
-WHERE axc.id_persona = '$id_alumno'");
+INNER JOIN alumnos_x_curso AS axc ON axc.id_curso = m.id_curso ");
+//WHERE axc.id_persona = '$id_alumno' Capaz sea asi?
+
 $materias = [];
 if($resultado){
 		while($materia = mysqli_fetch_assoc($resultado)){
@@ -24,7 +25,11 @@ if($resultado){
 $materiales = [];
 
 $materiales = [];
-$query = "SELECT mat.id_material, mat.tipo_material, mat.unidad, mat.url, mat.id_materia, m.nombre_materia FROM materiales AS mat INNER JOIN materias AS m ON m.id_materia = mat.id_materia INNER JOIN alumnos_x_curso AS axc ON axc.id_curso = m.id_curso WHERE axc.id_persona = '$id_alumno'";
+$query = "SELECT mat.id_material, mat.tipo_material, mat.unidad, mat.url, mat.id_materia, m.nombre_materia 
+FROM materiales AS mat 
+INNER JOIN materias AS m ON m.id_materia = mat.id_materia 
+INNER JOIN alumnos_x_curso AS axc ON axc.id_curso = m.id_curso 
+WHERE axc.id_persona = '$id_alumno'"; 
 $resultado = mysqli_query($con, $query);
 if($resultado){
 	while($material = mysqli_fetch_assoc($resultado)){

@@ -19,15 +19,19 @@ if($resultado){
 	}
 }
 
+
 $alumnos = [];
 $materia_seleccionada = $_POST['materia'];
+
+
 if($materia_seleccionada){
-		$resultado = mysqli_query($con, "SELECT p.dni, p.apellido, p.nombre, p.id_persona 
-        FROM alumnos_x_curso as axc 
-        INNER JOIN personas p ON axc.id_persona = p.id_persona 
-        INNER JOIN tipo_persona_x_persona tpp ON tpp.id_persona = p.id_persona 
-        INNER JOIN tipos_personas tp ON tp.id_tipo_persona = tpp.id_tipo_persona 
-        WHERE tp.tipo = 'alumno'");
+		$resultado = mysqli_query($con, "SELECT p.id_persona, p.nombre, p.apellido, p.dni, p.mail
+		FROM personas as p
+    	INNER JOIN alumnos_x_materia as axm on axm.id_persona = p.id_persona
+        INNER JOIN materias as m on m.id_materia = axm.id_materia
+        INNER JOIN tipo_persona_x_persona as tpp on tpp.id_persona = p.id_persona
+        INNER JOIN tipos_personas as tp on tp.id_tipo_persona = tpp.id_tipo_persona
+        WHERE tp.tipo='alumno' AND m.id_materia = '$materia_seleccionada'"); 
 		if($resultado){
 				while($alumno = mysqli_fetch_assoc($resultado)){
 						$alumnos[] = $alumno;
@@ -68,11 +72,12 @@ if($materia_seleccionada){
 					</select>
 				</div>
 				<div class="col-md-4">
-					<button type="submit" class="btn btn-dark w-100">Ver alumnos</button>
+					<button onsubmit="return false;" type="submit" class="btn btn-dark w-100">Ver alumnos</button>
+					
 				</div>
 			</div>
 		</form>
-		<?php if($materia_seleccionada){ ?>
+		<?php if(!$materia_seleccionada){ ?>
 		<div class="table-responsive">
 			<table class="table table-bordered table-hover align-middle tabla-organizada">
 				<thead>
@@ -80,6 +85,7 @@ if($materia_seleccionada){
 						<th>DNI</th>
 						<th>Nombre</th>
 						<th>Apellido</th>
+						<th>Email</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -88,6 +94,7 @@ if($materia_seleccionada){
 						<td><?= htmlspecialchars($alumno['dni']) ?></td>
 						<td><?= htmlspecialchars($alumno['nombre']) ?></td>
 						<td><?= htmlspecialchars($alumno['apellido']) ?></td>
+						<td><?= htmlspecialchars($alumno['email']) ?></td>
 					</tr>
 					<?php }}else{ ?>
 					<tr><td colspan="3" class="text-center">No hay alumnos en esta materia.</td></tr>

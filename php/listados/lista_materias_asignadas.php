@@ -2,7 +2,9 @@
 include '../conesion.php';
 session_start();
 if(!isset($_SESSION['id_persona'])){
-		echo "<script>alert('Sesion no iniciada');window.location.replace('https://localhost/Dinamica/practica/index.html');</script>";
+		echo "<script>alert('Sesion no iniciada');
+		window.location.replace('https://localhost/Dinamica/practica/index.html');
+		</script>";
 		exit;
 }
 $id_alumno = $_SESSION['id_persona'];

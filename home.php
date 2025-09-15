@@ -151,11 +151,12 @@ foreach ($tipos as $tipo){
             <div class="tree-branch">
               <a href="./php/altas/alta_alumno_curso.php" class="btn" target="_blank">Alta Alumno</a>
               <a href="./php/listados/lista_alumnos.php" class="btn" target="_blank">Ver Alumnos</a>
-              <?php if($esPreceptor){ ?>
-                <a href="./php/modificaciones/asignar_alumno_x_curso.php" class="btn" target="_blank">Asignar alumno a curso</a>
-              <?php } ?>
             </div>
           </div>
+          <?php if($esPreceptor){ ?>
+            <a class="nav-link" href="./php/modificaciones/asignar_alumno_x_curso.php" class="btn" target="_blank">Asignar alumno a curso</a>
+            <a class="nav-link" href="./php/modificaciones/asignar_alumno_x_materia.php" class="btn" target="_blank">Asignar materia a alumno</a>
+            <?php } ?>
 
           <div class="tree-menu">
             <a class="nav-link" href="#" tabindex="0" style="position: relative;">Materias</a>
@@ -177,7 +178,7 @@ foreach ($tipos as $tipo){
 
 
         <?php if($esDocente){ ?>
-          <a class="nav-link" href="./php/listados/ver_mis_alumnos.php" style="background-color: #b2dfd1; font-weight: bold;" target="_blank">Ver mis alumnos por materia</a>
+          <a class="nav-link" href="./php/listados/ver_mis_alumnos.php" style="background-color: #b2dfd1;" target="_blank">Ver mis alumnos por materia</a>
           <a class="nav-link" href="./php/modificaciones/editar_perfil.php" target="_blank">Editar mi perfil</a>
         <?php } ?>
 
@@ -190,7 +191,7 @@ foreach ($tipos as $tipo){
         <?php if($esAlumno){ ?>
           <a class="nav-link" href="./php/listados/lista_materias_asignadas.php" target="_blank">Listar materias asignadas</a>
           <a class="nav-link" href="./php/listados/lista_material_asignado.php" target="_blank">Listar material asignado</a>
-          <a class="nav-link" href="./php/modificaciones/editar_perfilAlumno.php" target="_blank">Editar mi perfil</a>
+          <a class="nav-link" href="./php/modificaciones/editar_perfilAlumno.php" target="_blank">Editar mi perfil (Alumno)</a>
         <?php } ?>
 
       </nav>
@@ -200,6 +201,7 @@ foreach ($tipos as $tipo){
   <div class="container-fluid d-flex justify-content-center align-items-center position-relative" style="min-height: 90vh;">
     <div class="contenido text-center">
       <h2 class="fw-bold mb-4">Plei</h2>
+      <?php foreach($tipos as $tipo){echo $tipo['tipo'];} ?>
     </div>
   </div>
 
