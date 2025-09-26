@@ -4,26 +4,21 @@ include '../conesion.php';
 
 session_start();
 
-$idp = $_SESSION['id_persona'];
+$id = $_GET['id'];
 
 
 
-$resultado=mysqli_query($con,"SELECT m.nombre_materia, m.turno, m.grupo, m.id_materia, c.grado, mo.moda, s.seccion, p.id_persona 
-from materias as m INNER JOIN cursos as c on c.id_curso=m.id_curso 
-INNER JOIN modalidad as mo on mo.id_modalidad=c.id_modalidad 
-INNER JOIN secciones as s on s.id_seccion=c.id_seccion
-INNER JOIN docentes_x_materia as dm on dm.id_materia=m.id_materia 
-INNER JOIN personas as p on p.id_persona=dm.id_persona
-WHERE p.id_persona = $idp
-
-;
+$resultado=mysqli_query($con,"SELECT mat.id_material, mat.tipo_material, mat.unidad, mat.url, mat.id_materia, m.nombre_materia
+FROM materiales as mat
+INNER JOIN materias as m on m.id_materia=mat.id_materia
+WHERE m.id_materia = $id
 ");
 
-$materiasxdocente=[];
+$materialesxmateria=[];
 
 if($resultado){    
-    while($matxdoc = mysqli_fetch_assoc($resultado)){      
-      $materiasxdocente[] = $matxdoc;
+    while($matxmat= mysqli_fetch_assoc($resultado)){      
+      $materialesxmateria[] = $matxmat;
     }
   } 
 
@@ -35,7 +30,7 @@ if($resultado){
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Materias por Docente</title>
+  <title>Materiales</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
@@ -55,25 +50,22 @@ if($resultado){
         <thead>
           <tr>
             <th>Nombre De la materia</th>
-            <th>Turno</th>
-            <th>Grupo</th>
-            <th>Grado</th>
-            <th>Modalidad</th>
-            <th>Seccion</th>
+            <th>Unidad</th>
+            <th>Tipo Material</th>
+            <th>URL</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <?php foreach ($materiasxdocente as $mat) { ?>
+          <?php foreach ($materialesxmateria as $mat) { ?>
             <tr>
               <td><?= htmlspecialchars($mat['nombre_materia']) ?></td>
-              <td><?= htmlspecialchars($mat['turno']) ?></td>
-              <td><?= htmlspecialchars($mat['grupo']) ?></td>
-              <td><?= htmlspecialchars($mat['grado']) ?></td>
-              <td><?= htmlspecialchars($mat['moda']) ?></td>
-              <td><?= htmlspecialchars($mat['seccion']) ?></td>
+              <td><?= htmlspecialchars($mat['unidad']) ?></td>
+              <td><?= htmlspecialchars($mat['tipo_material']) ?></td>
+              <td><?= htmlspecialchars($mat['url']) ?></td>
               <td>
-                <a href="../listados/lista_mis_materiales.php?id=<?php echo urlencode($mat['id_materia']); ?>" class="btn btn-warning btn-sm">Ver materiales</a>
+                <a href="../modificaciones/editar_mi_material.php?id=<?php echo urlencode($mat['id_material']); ?>" class="btn btn-warning btn-sm">Modificar</a>
+                <a href="../modificaciones/eliminar_material.php?id=<?php echo urlencode($mat['id_material']); ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que desea eliminar este material?');">Eliminar</a>
             </td>
             </tr>
           <?php } ?>
@@ -81,7 +73,7 @@ if($resultado){
       </table>
     </div>
     <div class="text-end mt-3">
-      <a href="http://localhost/Dinamica/practica/home.php" class="boton-volver">Volver</a>
+      <a href="http://localhost/Dinamica/practica/php/listados/lista_materiax_docente.php" class="boton-volver">Volver</a>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

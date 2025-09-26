@@ -72,14 +72,32 @@ foreach ($tipos as $tipo){
     .tree-menu:hover > .tree-branch, .tree-menu:focus-within > .tree-branch { display: flex; flex-direction: column; gap: 0.5rem; }
     .tree-branch .btn { width: 100%; text-align: left; background: #b2dfd1; color: #222; border: none; border-radius: 0.5rem; transition: background 0.2s, color 0.2s; }
     .tree-branch .btn:hover { background: rgb(80,0,100); color: #fff; }
+        #translate-btn {
+      padding: 10px 20px;
+      background: #0073e6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(15, 15, 15, 0.7); border-bottom: 2px solid #00004F;">
-    <div class="container-fluid">
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgba(15, 15, 15, 0.7); border-bottom: 2px solid #00004F;">  
+  <div class="container-fluid">
       <button class="btn btn-outline-light me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#barraMenu" aria-controls="barraMenu">
         <span class="navbar-toggler-icon"></span>
       </button>
+        <button id="translate-btn">Traducir al inglés</button>
+
+  <div id="google_translate_element" class="google"></div>
+
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+	      new google.translate.TranslateElement({pageLanguage: 'es', includedLanguages: 'ca,eu,gl,en,fr,it,pt,de', layout: google.translate.TranslateElement.InlineLayout.SIMPLE, gaTrack: true}, 'google_translate_element');
+      }
+      </script>
       <a class="navbar-brand fw-bold" href="#"><?php echo $_SESSION['nombre']." ".$_SESSION['apellido']; ?></a>
     </div>
   </nav>
@@ -179,6 +197,7 @@ foreach ($tipos as $tipo){
 
         <?php if($esDocente){ ?>
           <a class="nav-link" href="./php/listados/ver_mis_alumnos.php" style="background-color: #b2dfd1;" target="_blank">Ver mis alumnos por materia</a>
+          <a class="nav-link" href="./php/listados/lista_materiax_docente.php" style="background-color: #b2dfd1;" target="_blank">Ver mis materias</a>
           <a class="nav-link" href="./php/modificaciones/editar_perfil.php" target="_blank">Editar mi perfil</a>
         <?php } ?>
 
@@ -208,5 +227,6 @@ foreach ($tipos as $tipo){
   <a href="./php/cerrar_sesion.php" class="btn btn-danger position-fixed" style="right: 40px; bottom: 40px; border-radius:0.5rem; z-index:9999;">Cerrar sesión</a>
 
   <script src="./bootstrap-5.0.2-dist/js/bootstrap.bundle.js"></script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>

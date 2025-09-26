@@ -1,16 +1,33 @@
 <?php
 include "../conesion.php";
 
-$resultado = mysqli_query($con, "SELECT ml.id_material, ml.tipo_material, ml.unidad, 
-ml.url, ml.id_materia, m.nombre_materia
-FROM materiales as ml
-INNER JOIN materias as m on ml.id_materia = m.id_materia");
+$id = $_GET['id'];
+
+$resultado = mysqli_query($con, "SELECT mat.id_material, mat.tipo_material, mat.unidad, mat.url, mat.id_materia
+FROM materiales as mat
+INNER JOIN materias as m on m.id_materia=mat.id_materia
+WHERE m.id_materia = $id");
 
 $materiales = [];
 
 if ($resultado) {
     while($material = mysqli_fetch_assoc($resultado)){
         $materiales[] = $material;
+    }
+}
+
+$resultado = mysqli_query($con, "SELECT m.nombre_materia, m.turno, m.grupo, m.id_materia, c.grado, mo.moda, s.seccion, p.id_persona 
+from materias as m INNER JOIN cursos as c on c.id_curso=m.id_curso 
+INNER JOIN modalidad as mo on mo.id_modalidad=c.id_modalidad 
+INNER JOIN secciones as s on s.id_seccion=c.id_seccion
+INNER JOIN docentes_x_materia as dm on dm.id_materia=m.id_materia 
+INNER JOIN personas as p on p.id_persona=dm.id_persona");
+
+$materias = [];
+
+if ($resultado){
+    while($materia = mysqli_fetch_assoc($resultado)){
+        $materias[]=$materia;
     }
 }
 
@@ -21,7 +38,8 @@ if($_SERVER["REQUEST_METHOD"] === "POST"){
     $url = $_POST['url'];
     $materia = $_POST['materia'];
     
-    mysqli_query($con, "UPDATE materiales SET tipo_material='$tipo', url='$url', id_materia='$materia' WHERE id_material='$id_material'");
+    mysqli_query($con, "UPDATE materiales SET tipo_material='$tipo', url='$url', id_materia='$materia' 
+      WHERE id_material='$id_material'");
     header("Location: editar_mi_material.php");
     exit;
 }
