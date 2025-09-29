@@ -18,6 +18,7 @@ if($resultado){
   if($_SERVER['REQUEST_METHOD'] === 'GET'){
 
 $curso_seleccionado = $_GET['curso'];
+$materia_seleccionada = $_GET['materia'];
 
 if($curso_seleccionado){
   $resultado = mysqli_query($con, 
@@ -88,7 +89,7 @@ if ($resultado){
       </form>
       
   <?php if($curso_seleccionado){ ?>
-      <form autocomplete="off" action="" method="POST">
+      <form autocomplete="off" action="" method="GET">
       
         <div class="mb-3">
           <select name="materia" class="form-select" required>
@@ -100,6 +101,15 @@ if ($resultado){
             <?php } ?>    
           </select>
         </div>
+        <input type="submit" value="Asignar" class="btn w-100 text-white"
+        style="background-color: rgba(15, 15, 15, 0.7); border: 2px solid #00004F; transition: all 0.3s ease-in-out;"
+        onmouseover="this.style.backgroundColor='rgb(80,0,100)'; this.style.transform='scale(1.05)'"
+        onmouseout="this.style.backgroundColor='rgba(15,15,15,0.7)'; this.style.transform='scale(1)'">
+      </form>
+      <?php } ?>
+
+      <?php if($materia_seleccionada){ ?>
+      <form autocomplete="off" action="" method="POST">
         <div class="mb-4">
           <select name="alumno" class="form-select" required>
             <option value="">Alumno</option>

@@ -31,7 +31,8 @@ if($_SERVER["REQUEST_METHOD"] === "POST"){
     $seccion = $_POST["seccion"];
 
     
-    mysqli_query($con,"INSERT INTO cursos (grado,id_modalidad,id_seccion) VALUES ('$grado','$modalidad','$seccion')");
+    mysqli_query($con,"INSERT INTO cursos (grado,id_modalidad,id_seccion) 
+    VALUES ('$grado','$modalidad','$seccion')");
     mysqli_close($con);
 
 }
