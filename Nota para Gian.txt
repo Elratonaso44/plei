@@ -1,3 +1,0 @@
-Tuve muchos problemas con las consultas relacionada a las materias y materiales que no supe arreglar
-La logica deberia estar bien escrita en el codigo pero no se porque no fucnionan
--Matias Benetti
