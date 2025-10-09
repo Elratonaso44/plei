@@ -1,0 +1,24 @@
+# Archivos de configuración y secretos
+.env
+conf.env
+php/conesion.php
+config/config.php
+
+
+# Librerías externas
+php/PHPMailer/
+vendor/
+
+# Archivos de logs
+*.log
+
+# Sistema operativo / editor
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+
+# Backups
+*.bak
+*.backup
+
