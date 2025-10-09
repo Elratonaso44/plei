@@ -1,0 +1,15 @@
+# Archivos de configuración y secretos
+.env
+
+php/config/config.php
+
+# Dependencias / librerías externas
+vendor/
+node_modules/
+
+# Archivos de logs
+*.log
+
+# Otros archivos de sistema de Windows
+Thumbs.db
+.DS_Store
