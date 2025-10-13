@@ -35,6 +35,14 @@
  
   mysqli_query($con, "INSERT INTO tipo_persona_x_persona 
   (id_persona, id_tipo_persona) VALUES ('$ultimo_id','$tipo')");
+
+  $resultado = enviarMail($user, $nombre,$apellido, $user);
+
+if ($resultado === true) {
+echo "<script>alert('Registro completo, y correo enviado a casilla: $user');</script>";
+} else {
+    echo $resultado;
+}
 } 
 ?>
 <!DOCTYPE html><html lang="es">
