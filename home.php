@@ -113,7 +113,9 @@ foreach ($tipos as $tipo){
 
 
         <?php if($esAdmin){ ?>
-          <a class="nav-link" href="./php/altas/register.php" target="_blank">Registrar Usuario</a>
+          <a class="nav-link" href="./php/altas/register.php" target="_blank">Registrar Preceptor / Docente</a>
+                              <a class="nav-link" href="./php/altas/registro_alumno.php" target="_blank">Registrar Alumno</a>
+
           <a class="nav-link" href="./php/listados/lista_personas.php" target="_blank">Lista de personas</a>
 
           <div class="tree-menu">

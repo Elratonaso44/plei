@@ -24,15 +24,12 @@
     $dni = $_POST['dni'];  
     $apellido = $_POST['apellido'];  
     $nombre = $_POST['nombre'];  
-    $email = $_POST['email'];  
     $user = $_POST['user'];  
-    $pass = $_POST['pass'];  
     $tipo = $_POST['tipo'];
-    $rol = $_POST['rol'];
 
   mysqli_query($con, "INSERT INTO personas 
   (dni, apellido, nombre, mail, usuario, password, id_rol) 
-  VALUES ('$dni', '$apellido','$nombre','$email','$user','$pass', '$rol')");
+  VALUES ('$dni', '$apellido','$fecha_nacimiento,'$nombre','$user','$dni' (SELECT id_rol from roles where rol = 'administrador')");
 
   $ultimo_id=mysqli_insert_id($con); 
  
@@ -62,8 +59,8 @@
             <input type="text" name="nombre" class="form-control" placeholder="Nombre" style="background-color: #b2dfd1; border-radius: 0.5rem;" required>        
           </div>        
           <div class="mb-3">          
-            <input type="email" name="email" class="form-control" placeholder="Email" style="background-color: #b2dfd1; border-radius: 0.5rem;" required>        
-          </div>
+          <input type="text" name="user" class="form-control" placeholder="Usuario" style="background-color: #b2dfd1; border-radius: 0.5rem;" required>        
+        </div>   
         <div class="mb-3">          
           <select name="tipo" class="form-select" required >       
             <option value="">Seleccione un tipo persona</option>
@@ -74,17 +71,8 @@
             </select>        
           </div>
            <div class="mb-3">          
-          <select name="rol" class="form-select" required >       
-            <option value="">Seleccione una rol</option>
-            <?php foreach ($roles as $rol){ ?>
-              <option value="<?php echo htmlspecialchars($rol['id_rol']); ?>">
-                <?php echo htmlspecialchars($rol['rol']); ?>
-              </option><?php }?>         
-            </select>        
+                
           </div>
-        <div class="mb-3">          
-          <input type="text" name="user" class="form-control" placeholder="Usuario" style="background-color: #b2dfd1; border-radius: 0.5rem;" required>        
-        </div>        <div class="mb-3">          <input type="password" name="pass" class="form-control" placeholder="Contraseña" style="background-color: #b2dfd1; border-radius: 0.5rem;" required>        
       </div>        
       <input type="submit" value="Registrarse" class="btn w-100 text-white"          style="background-color: rgba(15, 15, 15, 0.7); border: 2px solid #00004F; transition: all 0.3s ease-in-out;"          onmouseover="this.style.backgroundColor='rgb(80,0,100)'; this.style.transform='scale(1.05)'"          onmouseout="this.style.backgroundColor='rgba(15,15,15,0.7)'; this.style.transform='scale(1)'">                
       <div class="text-center mt-3">          

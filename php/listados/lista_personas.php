@@ -2,7 +2,7 @@
 
 include'../conesion.php';
 
-$resultado = mysqli_query($con, "SELECT p.id_persona, p.dni, p.apellido, p.nombre, p.mail, p.usuario, r.rol,
+$resultado = mysqli_query($con, "SELECT p.id_persona, p.dni, p.apellido, p.nombre, p.usuario, r.rol,
 GROUP_CONCAT(t.tipo SEPARATOR ' | ') AS tipo
 FROM personas as p
 INNER JOIN tipo_persona_x_persona as tp on tp.id_persona = p.id_persona
@@ -56,7 +56,7 @@ if($resultado){
             <th>DNI</th>
             <th>Nombre</th>
             <th>Apellido</th>
-            <th>Email</th>
+            <th>Usuario</th>
             <th>Tipo</th>
             <th>Rol</th>
             <th>Accion</th>
@@ -68,7 +68,8 @@ if($resultado){
             <td><?php echo htmlspecialchars($persona['dni']); ?></td>
             <td><?php echo htmlspecialchars($persona['nombre']); ?></td>
             <td><?php echo htmlspecialchars($persona['apellido']); ?></td>
-            <td><?php echo htmlspecialchars($persona['mail']); ?></td>
+                        <td><?php echo htmlspecialchars($persona['usuario']); ?></td>
+
             <td><?php echo htmlspecialchars($persona['tipo']); ?></td>
             <td><?php echo htmlspecialchars($persona['rol']); ?></td>
             <td>

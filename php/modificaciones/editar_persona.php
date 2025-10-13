@@ -3,7 +3,7 @@ include "../conesion.php";
 
 $id = $_GET['id'];
 
-$resultado = mysqli_query($con, "SELECT p.id_persona, p.dni, p.apellido, p.nombre, p.mail, p.usuario, r.rol,
+$resultado = mysqli_query($con, "SELECT p.id_persona, p.dni, p.apellido, p.nombre, p.usuario, r.rol,
 GROUP_CONCAT(t.tipo SEPARATOR ' | ') AS tipo
 FROM personas as p
 INNER JOIN tipo_persona_x_persona as tp on tp.id_persona = p.id_persona
@@ -63,12 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $dni = $_POST['dni'];
   $nombre = $_POST['nombre'];
   $apellido = $_POST['apellido'];
-  $mail = $_POST["mail"];
+  $mail = $_POST['usuario'];
   $tipos = $_POST['tipo'];
   $rol = $_POST['rol'];
 
   mysqli_query($con, "UPDATE personas SET 
-  dni='$dni', nombre='$nombre', apellido='$apellido', mail='$mail', 
+  dni='$dni', nombre='$nombre', apellido='$apellido', usuario='$mail', 
   id_rol='$rol' WHERE id_persona='$id'");
 
   mysqli_query($con, "DELETE FROM tipo_persona_x_persona WHERE id_persona='$id'");
@@ -114,8 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="text" name="apellido" class="form-control" value="<?php echo htmlspecialchars($personas['apellido']); ?>" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="text" name="mail" class="form-control" value="<?php echo htmlspecialchars($personas['mail']); ?>" required>
+        <label class="form-label">Usuario</label>
+        <input type="text" name="usuario" class="form-control" value="<?php echo htmlspecialchars($personas['usuario']); ?>" required>
       </div>
       <div class="mb-3">
         <label class="form-label">Rol</label>
