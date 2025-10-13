@@ -29,7 +29,7 @@
 
   mysqli_query($con, "INSERT INTO personas 
   (dni, apellido, nombre, mail, usuario, password, id_rol) 
-  VALUES ('$dni', '$apellido','$fecha_nacimiento,'$nombre','$user','$dni' (SELECT id_rol from roles where rol = 'administrador')");
+  VALUES ('$dni', '$apellido','$fecha_nacimiento,'$nombre','$user','$dni', (SELECT id_rol from roles where rol = 'administrador')");
 
   $ultimo_id=mysqli_insert_id($con); 
  
@@ -63,6 +63,9 @@ echo "<script>alert('Registro completo, y correo enviado a casilla: $user');</sc
           <div class="mb-3">          
             <input type="text" name="apellido" class="form-control" placeholder="Apellido" style="background-color: #b2dfd1; border-radius: 0.5rem;" required>        
           </div>        
+               <div class="mb-3">
+            <input type="date" name="fecha_nacimiento" class="form-control" id="fecha_nacimiento" style="background-color: #b2dfd1; border-radius: 0.5rem;" required>
+        </div>
           <div class="mb-3">          
             <input type="text" name="nombre" class="form-control" placeholder="Nombre" style="background-color: #b2dfd1; border-radius: 0.5rem;" required>        
           </div>        

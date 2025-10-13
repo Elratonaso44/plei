@@ -2,7 +2,7 @@
 
 include'../conesion.php';
 
-$resultado = mysqli_query($con, "SELECT p.id_persona, p.dni, p.apellido, p.nombre, p.usuario, r.rol,
+$resultado = mysqli_query($con, "SELECT p.id_persona, p.dni, p.apellido,p.fecha_nacimiento, p.nombre, p.usuario, r.rol,
 GROUP_CONCAT(t.tipo SEPARATOR ' | ') AS tipo
 FROM personas as p
 INNER JOIN tipo_persona_x_persona as tp on tp.id_persona = p.id_persona
@@ -14,15 +14,21 @@ ORDER BY p.apellido ASC
 
 $personas = [];
 
-if($resultado){
-    while($persona = mysqli_fetch_assoc($resultado)){
+if ($resultado) {
+    while ($persona = mysqli_fetch_assoc($resultado)) {
+        $fechaNacimiento = new DateTime($persona['fecha_nacimiento']);
+        $fechaActual = new DateTime();
+        $diferencia = $fechaActual->diff($fechaNacimiento);
+        $persona['edad'] = $diferencia->y; 
         $personas[] = $persona;
     }
 }
 
 
 
+
 ?>
+
 
 
 
@@ -56,6 +62,7 @@ if($resultado){
             <th>DNI</th>
             <th>Nombre</th>
             <th>Apellido</th>
+            <th>Edad</th>
             <th>Usuario</th>
             <th>Tipo</th>
             <th>Rol</th>
@@ -68,6 +75,7 @@ if($resultado){
             <td><?php echo htmlspecialchars($persona['dni']); ?></td>
             <td><?php echo htmlspecialchars($persona['nombre']); ?></td>
             <td><?php echo htmlspecialchars($persona['apellido']); ?></td>
+                                    <td><?php echo htmlspecialchars($persona['edad']); ?></td>
                         <td><?php echo htmlspecialchars($persona['usuario']); ?></td>
 
             <td><?php echo htmlspecialchars($persona['tipo']); ?></td>
