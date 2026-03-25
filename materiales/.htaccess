@@ -1,0 +1,12 @@
+# Los archivos se sirven SOLO a través de ver_material.php
+# que verifica sesión, permisos y alcance del recurso.
+
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    Deny from all
+</IfModule>

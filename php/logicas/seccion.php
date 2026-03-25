@@ -1,0 +1,2 @@
+<?php
+include "../conesion.php"; include "../config.php"; session_start(); exigir_rol('administrador'); if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); redirigir('home.php'); } verificar_csrf_o_origen(); $seccion = trim($_POST['seccion'] ?? ''); if ($seccion !== '') { $sentencia = mysqli_prepare($con, 'INSERT INTO secciones (seccion) VALUES (?)'); if ($sentencia) { mysqli_stmt_bind_param($sentencia, 's', $seccion); mysqli_stmt_execute($sentencia); mysqli_stmt_close($sentencia); } } redirigir('home.php'); 

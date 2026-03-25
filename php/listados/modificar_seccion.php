@@ -1,0 +1,1 @@
+<?php include '../conesion.php'; include '../config.php'; session_start(); exigir_rol('administrador'); redirigir('php/listados/lista_secciones.php'); 

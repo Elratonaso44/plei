@@ -1,0 +1,2 @@
+<?php
+$db_host = "localhost"; $db_user = "root"; $db_pass = ""; $db_name = "plei_db"; $con = mysqli_connect($db_host, $db_user, $db_pass, $db_name); if (mysqli_connect_errno()) { error_log("PLEI DB Error: " . mysqli_connect_error()); http_response_code(503); die("El servicio no está disponible en este momento. Intentá más tarde."); } mysqli_set_charset($con, "utf8mb4"); 

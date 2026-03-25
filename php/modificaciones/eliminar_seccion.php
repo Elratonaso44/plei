@@ -1,0 +1,2 @@
+<?php
+include "../conesion.php"; include "../config.php"; session_start(); exigir_rol('administrador'); if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); redirigir('php/listados/lista_secciones.php'); } verificar_csrf(); $id_seccion = (int)($_POST['id'] ?? 0); if ($id_seccion > 0) { $sentencia = mysqli_prepare($con, 'DELETE FROM secciones WHERE id_seccion = ? LIMIT 1'); if ($sentencia) { mysqli_stmt_bind_param($sentencia, 'i', $id_seccion); mysqli_stmt_execute($sentencia); mysqli_stmt_close($sentencia); } } redirigir('php/listados/lista_secciones.php'); 
