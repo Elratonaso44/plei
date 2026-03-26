@@ -15,6 +15,10 @@ if ($id_curso <= 0) {
     redirigir('php/listados/lista_cursos.php?estado=err&msg=' . urlencode('Solicitud inválida.'));
 }
 
+if (curso_tiene_historial_boletin($con, $id_curso)) {
+    redirigir('php/listados/lista_cursos.php?estado=err&msg=' . urlencode('No se puede eliminar el curso porque tiene historial de boletín.'));
+}
+
 $sentencia = mysqli_prepare($con, 'DELETE FROM cursos WHERE id_curso = ? LIMIT 1');
 if (!$sentencia) {
     redirigir('php/listados/lista_cursos.php?estado=err&msg=' . urlencode('No se pudo preparar la eliminación.'));

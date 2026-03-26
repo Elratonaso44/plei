@@ -15,6 +15,10 @@ if ($id_materia <= 0) {
     redirigir('php/listados/lista_materias.php?estado=err&msg=' . urlencode('Solicitud inválida.'));
 }
 
+if (materia_tiene_historial_boletin($con, $id_materia)) {
+    redirigir('php/listados/lista_materias.php?estado=err&msg=' . urlencode('No se puede eliminar la materia porque tiene historial de boletín.'));
+}
+
 $sentencia = mysqli_prepare($con, 'DELETE FROM materias WHERE id_materia = ? LIMIT 1');
 if (!$sentencia) {
     redirigir('php/listados/lista_materias.php?estado=err&msg=' . urlencode('No se pudo preparar la eliminación.'));

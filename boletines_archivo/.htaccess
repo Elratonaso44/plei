@@ -1,0 +1,12 @@
+# Los boletines se sirven SOLO a través de php/boletin/descargar_boletin.php
+# que valida sesion, permisos y alcance del recurso.
+
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    Deny from all
+</IfModule>

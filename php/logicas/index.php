@@ -11,24 +11,33 @@ verificar_csrf();
 
 $email = trim((string)($_POST['email'] ?? ''));
 $password = trim((string)($_POST['pass'] ?? ''));
+$ip_origen = cliente_ip_actual();
 
 if ($email === '' || $password === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     redirigir('index.php?error=campos');
 }
+
+$estado_bloqueo = auth_login_esta_bloqueado($con, $email, $ip_origen);
+if ((bool)$estado_bloqueo['bloqueado']) {
+    redirigir('index.php?error=bloqueado');
+}
+
+$filtro_activo = condicion_persona_activa($con, 'p');
 
 $persona = db_fetch_one(
     $con,
     "SELECT p.id_persona, p.nombre, p.apellido, p.usuario, p.password, r.rol
      FROM personas AS p
      LEFT JOIN roles AS r ON r.id_rol = p.id_rol
-     WHERE p.mail = ?
+     WHERE p.mail = ? $filtro_activo
      LIMIT 1",
     's',
     [$email]
 );
 
 if (!$persona) {
-    redirigir('index.php?error=usuario');
+    auth_login_registrar_fallo($con, $email, $ip_origen);
+    redirigir('index.php?error=credenciales');
 }
 
 $id_persona = (int)$persona['id_persona'];
@@ -110,10 +119,12 @@ if (es_hash_password($password_guardada)) {
 }
 
 if (!$password_valida) {
-    redirigir('index.php?error=password');
+    auth_login_registrar_fallo($con, $email, $ip_origen);
+    redirigir('index.php?error=credenciales');
 }
 
 $tipos = obtener_tipos_usuario($con, $id_persona);
+auth_login_limpiar_intentos($con, $email, $ip_origen);
 
 session_regenerate_id(true);
 $_SESSION['username'] = (string)$persona['usuario'];
@@ -123,6 +134,7 @@ $_SESSION['id_persona'] = $id_persona;
 $_SESSION['rol'] = (string)($persona['rol'] ?? '');
 $_SESSION['tipo'] = $tipos[0] ?? '';
 $_SESSION['forzar_cambio_password'] = $forzar_cambio_password ? 1 : 0;
+$_SESSION['ultima_actividad'] = time();
 
 mysqli_close($con);
 

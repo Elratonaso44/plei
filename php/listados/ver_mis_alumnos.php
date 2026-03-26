@@ -49,6 +49,7 @@ if ($materia_sel > 0 && $error_permiso === '') {
     }
 
     if ($materia_info) {
+        $filtro_activo_alumnos = condicion_persona_activa($con, 'p');
         $sql_alumnos = "SELECT DISTINCT p.id_persona, p.nombre, p.apellido, p.dni, p.mail
                         FROM personas AS p
                         INNER JOIN tipo_persona_x_persona AS tpp ON tpp.id_persona = p.id_persona
@@ -60,6 +61,7 @@ if ($materia_sel > 0 && $error_permiso === '') {
                                ON axc.id_persona = p.id_persona
                               AND axc.id_curso = ?
                         WHERE LOWER(tp.tipo) = 'alumno'
+                          $filtro_activo_alumnos
                           AND (axm.id_persona IS NOT NULL OR axc.id_persona IS NOT NULL)";
         $tipos_alumnos = 'ii';
         $parametros_alumnos = [$materia_sel, (int)$materia_info['id_curso']];

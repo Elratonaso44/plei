@@ -2,14 +2,9 @@
 include '../conesion.php';
 include '../config.php';
 session_start();
+exigir_inicio_sesion();
 
 header('Content-Type: application/json; charset=UTF-8');
-
-if (!isset($_SESSION['id_persona'])) {
-    http_response_code(403);
-    echo '[]';
-    exit;
-}
 
 $id_persona = (int)($_SESSION['id_persona'] ?? 0);
 $tipos_usuario = obtener_tipos_usuario($con, $id_persona);

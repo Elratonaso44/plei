@@ -1,6 +1,134 @@
 <?php
 define('BASE_URL', '/Dinamica/practica');
 
+function plei_app_env(): string {
+    static $env = null;
+    if ($env !== null) {
+        return $env;
+    }
+    $valor = getenv('APP_ENV');
+    $env = strtolower(trim((string)($valor === false ? 'development' : $valor)));
+    if ($env === '') {
+        $env = 'development';
+    }
+    return $env;
+}
+
+function plei_env_bool(string $clave, bool $default): bool {
+    $valor = getenv($clave);
+    if ($valor === false || $valor === '') {
+        return $default;
+    }
+    return filter_var($valor, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $default;
+}
+
+function plei_env_int(string $clave, int $default): int {
+    $valor = getenv($clave);
+    if ($valor === false || trim((string)$valor) === '') {
+        return $default;
+    }
+    $int = (int)$valor;
+    return $int > 0 ? $int : $default;
+}
+
+function plei_en_produccion(): bool {
+    return plei_app_env() === 'production';
+}
+
+function plei_aplicar_headers_seguridad(): void {
+    if (PHP_SAPI === 'cli' || headers_sent()) {
+        return;
+    }
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob:; font-src 'self' data: https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
+    if (plei_en_produccion()) {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    }
+}
+
+function plei_forzar_https_si_corresponde(): void {
+    if (PHP_SAPI === 'cli' || !plei_en_produccion() || headers_sent()) {
+        return;
+    }
+    $https_on = !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
+    $forwarded = strtolower(trim((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')));
+    $es_https = $https_on || $forwarded === 'https';
+    if ($es_https) {
+        return;
+    }
+    $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+    $uri = (string)($_SERVER['REQUEST_URI'] ?? '/');
+    if ($host === '') {
+        return;
+    }
+    header('Location: https://' . $host . $uri, true, 302);
+    exit;
+}
+
+function plei_configurar_sesion(): void {
+    static $configurada = false;
+    if ($configurada || session_status() !== PHP_SESSION_NONE) {
+        return;
+    }
+    $secure_default = plei_en_produccion();
+    $secure = plei_env_bool('SESSION_COOKIE_SECURE', $secure_default);
+    $same_site = 'Lax';
+    $domain = trim((string)(getenv('SESSION_COOKIE_DOMAIN') ?: ''));
+    $params = [
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => $domain === '' ? '' : $domain,
+        'secure' => $secure,
+        'httponly' => true,
+        'samesite' => $same_site,
+    ];
+    session_set_cookie_params($params);
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_secure', $secure ? '1' : '0');
+    ini_set('session.cookie_samesite', $same_site);
+    $configurada = true;
+}
+
+function plei_iniciar_sesion(): void {
+    plei_configurar_sesion();
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+}
+
+function plei_ttl_inactividad_segundos(): int {
+    $min = plei_env_int('SESSION_IDLE_MINUTES', 45);
+    if ($min < 5) {
+        $min = 5;
+    }
+    return $min * 60;
+}
+
+function plei_controlar_timeout_sesion(): void {
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        return;
+    }
+    $ahora = time();
+    $ttl = plei_ttl_inactividad_segundos();
+    $ultima = (int)($_SESSION['ultima_actividad'] ?? 0);
+    if ($ultima > 0 && ($ahora - $ultima) > $ttl) {
+        session_unset();
+        session_destroy();
+        plei_iniciar_sesion();
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        redirigir('index.php?error=timeout');
+    }
+    $_SESSION['ultima_actividad'] = $ahora;
+}
+
+plei_forzar_https_si_corresponde();
+plei_aplicar_headers_seguridad();
+plei_configurar_sesion();
+
 function url_ruta(string $ruta = ''): string {
     return BASE_URL . ($ruta ? '/' . ltrim($ruta, '/') : '');
 }
@@ -19,11 +147,18 @@ function redirect(string $path): void {
 }
 
 function exigir_inicio_sesion(): void {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    plei_iniciar_sesion();
+    plei_controlar_timeout_sesion();
     if (!isset($_SESSION['id_persona'])) {
         redirigir('index.php');
+    }
+    global $con;
+    $id_persona = (int)($_SESSION['id_persona'] ?? 0);
+    if ($id_persona > 0 && !persona_esta_activa($con, $id_persona)) {
+        session_unset();
+        session_destroy();
+        plei_iniciar_sesion();
+        redirigir('index.php?error=inactivo');
     }
     redirigir_si_requiere_cambio_password();
 }
@@ -89,9 +224,7 @@ function require_role($roles_permitidos): void {
 }
 
 function token_csrf(): string {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    plei_iniciar_sesion();
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
@@ -113,9 +246,7 @@ function csrf_field(): void {
 }
 
 function verificar_csrf(): void {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    plei_iniciar_sesion();
 
     $token_formulario = $_POST['csrf_token'] ?? '';
     $token_sesion = $_SESSION['csrf_token'] ?? '';
@@ -267,6 +398,241 @@ function columna_bd_existe(mysqli $conexion, string $tabla, string $columna): bo
     return $existe;
 }
 
+function persona_esta_activa(mysqli $conexion, int $id_persona): bool {
+    if ($id_persona <= 0) {
+        return false;
+    }
+    if (!columna_bd_existe($conexion, 'personas', 'activo')) {
+        return true;
+    }
+    $fila = db_fetch_one(
+        $conexion,
+        "SELECT activo
+         FROM personas
+         WHERE id_persona = ?
+         LIMIT 1",
+        'i',
+        [$id_persona]
+    );
+    if (!$fila) {
+        return false;
+    }
+    return (int)($fila['activo'] ?? 1) === 1;
+}
+
+function condicion_persona_activa(mysqli $conexion, string $alias = 'p', bool $incluir_inactivos = false): string {
+    if ($incluir_inactivos || !columna_bd_existe($conexion, 'personas', 'activo')) {
+        return '';
+    }
+    return " AND COALESCE($alias.activo, 1) = 1";
+}
+
+function expresion_persona_activo(mysqli $conexion, string $alias = 'p'): string {
+    if (!columna_bd_existe($conexion, 'personas', 'activo')) {
+        return '1';
+    }
+    return "COALESCE($alias.activo, 1)";
+}
+
+function solicitud_ver_inactivos(string $param = 'inactivos'): bool {
+    return isset($_GET[$param]) && trim((string)$_GET[$param]) === '1';
+}
+
+function cliente_ip_actual(): string {
+    $xff = trim((string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
+    if ($xff !== '') {
+        $partes = explode(',', $xff);
+        $ip = trim((string)$partes[0]);
+        if ($ip !== '') {
+            return substr($ip, 0, 45);
+        }
+    }
+    $ip = trim((string)($_SERVER['REMOTE_ADDR'] ?? ''));
+    if ($ip === '') {
+        $ip = '0.0.0.0';
+    }
+    return substr($ip, 0, 45);
+}
+
+function auth_intentos_disponible(mysqli $conexion): bool {
+    return columna_bd_existe($conexion, 'auth_login_intentos', 'id_intento');
+}
+
+function auth_clave_intento(string $usuario_ref, string $ip): string {
+    $usuario = strtolower(trim($usuario_ref));
+    $ip = trim($ip);
+    return hash('sha256', $ip . '|' . $usuario);
+}
+
+function auth_login_esta_bloqueado(mysqli $conexion, string $usuario_ref, string $ip): array {
+    if (!auth_intentos_disponible($conexion)) {
+        return ['bloqueado' => false, 'segundos' => 0];
+    }
+    $clave = auth_clave_intento($usuario_ref, $ip);
+    $fila = db_fetch_one(
+        $conexion,
+        "SELECT bloqueado_hasta
+         FROM auth_login_intentos
+         WHERE clave_hash = ?
+         LIMIT 1",
+        's',
+        [$clave]
+    );
+    if (!$fila || empty($fila['bloqueado_hasta'])) {
+        return ['bloqueado' => false, 'segundos' => 0];
+    }
+
+    $hasta_ts = strtotime((string)$fila['bloqueado_hasta']);
+    if ($hasta_ts === false || $hasta_ts <= time()) {
+        return ['bloqueado' => false, 'segundos' => 0];
+    }
+    return ['bloqueado' => true, 'segundos' => max(1, $hasta_ts - time())];
+}
+
+function auth_login_registrar_fallo(mysqli $conexion, string $usuario_ref, string $ip): void {
+    if (!auth_intentos_disponible($conexion)) {
+        return;
+    }
+    $clave = auth_clave_intento($usuario_ref, $ip);
+    $fila = db_fetch_one(
+        $conexion,
+        "SELECT id_intento, intentos, bloqueado_hasta
+         FROM auth_login_intentos
+         WHERE clave_hash = ?
+         LIMIT 1",
+        's',
+        [$clave]
+    );
+
+    if (!$fila) {
+        $stmt = mysqli_prepare(
+            $conexion,
+            "INSERT INTO auth_login_intentos
+                (clave_hash, ip, usuario_ref, intentos, bloqueado_hasta, actualizado_en)
+             VALUES (?, ?, ?, 1, NULL, NOW())"
+        );
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'sss', $clave, $ip, $usuario_ref);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+        }
+        return;
+    }
+
+    $id_intento = (int)$fila['id_intento'];
+    $intentos = (int)($fila['intentos'] ?? 0);
+    $bloqueado_hasta = (string)($fila['bloqueado_hasta'] ?? '');
+    $bloqueado_vigente = false;
+    if ($bloqueado_hasta !== '') {
+        $ts = strtotime($bloqueado_hasta);
+        $bloqueado_vigente = $ts !== false && $ts > time();
+    }
+
+    if (!$bloqueado_vigente) {
+        $intentos++;
+    }
+
+    $nuevo_bloqueo = null;
+    if (!$bloqueado_vigente && $intentos >= 5) {
+        $nuevo_bloqueo = date('Y-m-d H:i:s', time() + (15 * 60));
+        $intentos = 0;
+    } elseif ($bloqueado_vigente) {
+        $nuevo_bloqueo = $bloqueado_hasta;
+    }
+
+    $stmt = mysqli_prepare(
+        $conexion,
+        "UPDATE auth_login_intentos
+         SET ip = ?, usuario_ref = ?, intentos = ?, bloqueado_hasta = ?, actualizado_en = NOW()
+         WHERE id_intento = ?"
+    );
+    if (!$stmt) {
+        return;
+    }
+    mysqli_stmt_bind_param($stmt, 'ssisi', $ip, $usuario_ref, $intentos, $nuevo_bloqueo, $id_intento);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+}
+
+function auth_login_limpiar_intentos(mysqli $conexion, string $usuario_ref, string $ip): void {
+    if (!auth_intentos_disponible($conexion)) {
+        return;
+    }
+    $clave = auth_clave_intento($usuario_ref, $ip);
+    $stmt = mysqli_prepare(
+        $conexion,
+        "DELETE FROM auth_login_intentos
+         WHERE clave_hash = ?"
+    );
+    if (!$stmt) {
+        return;
+    }
+    mysqli_stmt_bind_param($stmt, 's', $clave);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+}
+
+function boletin_auditoria_disponible(mysqli $conexion): bool {
+    return columna_bd_existe($conexion, 'boletin_auditoria', 'id_auditoria');
+}
+
+function registrar_auditoria_boletin(mysqli $conexion, array $evento): bool {
+    if (!boletin_auditoria_disponible($conexion)) {
+        return false;
+    }
+
+    $tipo_evento = substr(trim((string)($evento['tipo_evento'] ?? '')), 0, 80);
+    if ($tipo_evento === '') {
+        return false;
+    }
+
+    $entidad = substr(trim((string)($evento['entidad'] ?? 'sistema')), 0, 80);
+    $id_actor = (int)($evento['id_actor'] ?? (int)($_SESSION['id_persona'] ?? 0));
+    $id_curso = isset($evento['id_curso']) ? (int)$evento['id_curso'] : null;
+    $id_periodo = isset($evento['id_periodo']) ? (int)$evento['id_periodo'] : null;
+    $id_materia = isset($evento['id_materia']) ? (int)$evento['id_materia'] : null;
+    $id_alumno = isset($evento['id_alumno']) ? (int)$evento['id_alumno'] : null;
+    $id_docente = isset($evento['id_docente']) ? (int)$evento['id_docente'] : null;
+    $id_objetivo = isset($evento['id_objetivo']) ? (int)$evento['id_objetivo'] : null;
+    $payload = $evento['payload'] ?? [];
+    $payload_json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($payload_json === false) {
+        $payload_json = '{}';
+    }
+    $ip = substr(cliente_ip_actual(), 0, 45);
+    $ua = substr(trim((string)($_SERVER['HTTP_USER_AGENT'] ?? '')), 0, 255);
+
+    $stmt = mysqli_prepare(
+        $conexion,
+        "INSERT INTO boletin_auditoria
+            (id_actor, tipo_evento, entidad, id_curso, id_periodo, id_materia, id_alumno, id_docente, id_objetivo, payload_json, ip_origen, user_agent)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    if (!$stmt) {
+        return false;
+    }
+
+    mysqli_stmt_bind_param(
+        $stmt,
+        'issiiiiiisss',
+        $id_actor,
+        $tipo_evento,
+        $entidad,
+        $id_curso,
+        $id_periodo,
+        $id_materia,
+        $id_alumno,
+        $id_docente,
+        $id_objetivo,
+        $payload_json,
+        $ip,
+        $ua
+    );
+    $ok = mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+    return (bool)$ok;
+}
+
 function es_hash_password(string $valor): bool {
     $info = password_get_info($valor);
     return (int)($info['algo'] ?? 0) !== 0;
@@ -307,9 +673,7 @@ function password_es_debil(string $password): bool {
 }
 
 function redirigir_si_requiere_cambio_password(): void {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    plei_iniciar_sesion();
 
     if (empty($_SESSION['forzar_cambio_password'])) {
         return;
@@ -531,6 +895,68 @@ function alumno_pertenece_a_curso(mysqli $conexion, int $id_alumno, int $id_curs
         [$id_alumno, $id_curso]
     );
     return (bool)$fila;
+}
+
+function curso_tiene_historial_boletin(mysqli $conexion, int $id_curso): bool {
+    if ($id_curso <= 0) {
+        return false;
+    }
+    if (!columna_bd_existe($conexion, 'boletin_curso_periodo', 'id_curso')) {
+        return false;
+    }
+
+    $tablas = [
+        ['tabla' => 'boletin_curso_periodo', 'columna' => 'id_curso'],
+        ['tabla' => 'boletin_notas', 'columna' => 'id_curso'],
+        ['tabla' => 'boletin_pdf_historial', 'columna' => 'id_curso'],
+        ['tabla' => 'boletin_complementos_anuales', 'columna' => 'id_curso'],
+    ];
+    foreach ($tablas as $t) {
+        if (!columna_bd_existe($conexion, $t['tabla'], $t['columna'])) {
+            continue;
+        }
+        $fila = db_fetch_one(
+            $conexion,
+            "SELECT 1
+             FROM {$t['tabla']}
+             WHERE {$t['columna']} = ?
+             LIMIT 1",
+            'i',
+            [$id_curso]
+        );
+        if ($fila) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function materia_tiene_historial_boletin(mysqli $conexion, int $id_materia): bool {
+    if ($id_materia <= 0) {
+        return false;
+    }
+    $tablas = [
+        ['tabla' => 'boletin_notas', 'columna' => 'id_materia'],
+        ['tabla' => 'boletin_complementos_anuales', 'columna' => 'id_materia'],
+    ];
+    foreach ($tablas as $t) {
+        if (!columna_bd_existe($conexion, $t['tabla'], $t['columna'])) {
+            continue;
+        }
+        $fila = db_fetch_one(
+            $conexion,
+            "SELECT 1
+             FROM {$t['tabla']}
+             WHERE {$t['columna']} = ?
+             LIMIT 1",
+            'i',
+            [$id_materia]
+        );
+        if ($fila) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function ids_tipo_persona_existentes(mysqli $conexion, array $ids_tipos): array {

@@ -15,37 +15,58 @@ if ($id_persona <= 0) {
     redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('Solicitud inválida.'));
 }
 
+if (!columna_bd_existe($con, 'personas', 'activo')) {
+    redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('Falta migración de producción. Ejecutá migracion_005_produccion.sql.'));
+}
+
 $id_operador = (int)($_SESSION['id_persona'] ?? 0);
 if ($id_persona === $id_operador) {
-    redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('No podés eliminar tu propio usuario.'));
+    redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('No podés inactivar tu propio usuario.'));
 }
 
 $persona_existe = db_fetch_one(
     $con,
-    "SELECT id_persona FROM personas WHERE id_persona = ? LIMIT 1",
+    "SELECT id_persona, COALESCE(activo, 1) AS activo
+     FROM personas
+     WHERE id_persona = ?
+     LIMIT 1",
     'i',
     [$id_persona]
 );
 if (!$persona_existe) {
     redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('La persona seleccionada no existe.'));
 }
-
-$sentencia = mysqli_prepare($con, 'DELETE FROM personas WHERE id_persona = ? LIMIT 1');
-if (!$sentencia) {
-    redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('No se pudo preparar la eliminación.'));
+if ((int)($persona_existe['activo'] ?? 1) !== 1) {
+    redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('La persona ya está inactiva.'));
 }
 
-mysqli_stmt_bind_param($sentencia, 'i', $id_persona);
+$sentencia = mysqli_prepare(
+    $con,
+    "UPDATE personas
+     SET activo = 0,
+         inactivado_en = NOW(),
+         inactivado_por = ?
+     WHERE id_persona = ?
+       AND COALESCE(activo, 1) = 1"
+);
+if (!$sentencia) {
+    redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('No se pudo preparar la inactivación.'));
+}
+
+mysqli_stmt_bind_param($sentencia, 'ii', $id_operador, $id_persona);
 $ok = mysqli_stmt_execute($sentencia);
-$errno = mysqli_errno($con);
+$afectadas = mysqli_stmt_affected_rows($sentencia);
 mysqli_stmt_close($sentencia);
 
-if ($ok) {
-    redirigir('php/listados/lista_personas.php?estado=ok&msg=' . urlencode('Persona eliminada correctamente.'));
+if ($ok && $afectadas > 0) {
+    registrar_auditoria_boletin($con, [
+        'tipo_evento' => 'usuario_inactivado',
+        'entidad' => 'persona',
+        'id_actor' => $id_operador,
+        'id_objetivo' => $id_persona,
+        'payload' => ['modulo' => 'lista_personas']
+    ]);
+    redirigir('php/listados/lista_personas.php?estado=ok&msg=' . urlencode('Persona inactivada correctamente.'));
 }
 
-if ($errno === 1451) {
-    redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('No se pudo eliminar: la persona tiene datos relacionados activos.'));
-}
-
-redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('No se pudo eliminar la persona.'));
+redirigir('php/listados/lista_personas.php?estado=err&msg=' . urlencode('No se pudo inactivar la persona.'));

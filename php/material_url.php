@@ -40,7 +40,9 @@ function material_local_es_previsualizable(string $url): bool {
 }
 
 function material_token_clave_usuario(int $id_persona): string {
-    if (session_status() === PHP_SESSION_NONE) {
+    if (function_exists('plei_iniciar_sesion')) {
+        plei_iniciar_sesion();
+    } elseif (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     $seed = '';

@@ -5,6 +5,7 @@ session_start();
 exigir_rol(['administrador']);
 
 $q = trim((string)($_GET['q'] ?? ''));
+$ver_inactivos = solicitud_ver_inactivos();
 $pagina = max(1, (int)($_GET['page'] ?? 1));
 $por_pagina = 20;
 $offset = ($pagina - 1) * $por_pagina;
@@ -26,6 +27,9 @@ if ($q !== '') {
     $parametros[] = $like;
 }
 
+$filtro_activo_sql = condicion_persona_activa($con, 'p', $ver_inactivos);
+$expr_activo = expresion_persona_activo($con, 'p');
+
 $total_row = db_fetch_one(
     $con,
     "SELECT COUNT(DISTINCT p.id_persona) AS total
@@ -33,7 +37,7 @@ $total_row = db_fetch_one(
      INNER JOIN tipo_persona_x_persona AS ti ON ti.id_persona = p.id_persona
      INNER JOIN tipos_personas AS t ON t.id_tipo_persona = ti.id_tipo_persona
      INNER JOIN preceptor_x_curso AS pc ON pc.id_persona = p.id_persona
-     WHERE LOWER(t.tipo) = 'preceptor' $filtro_sql",
+     WHERE LOWER(t.tipo) = 'preceptor' $filtro_activo_sql $filtro_sql",
     $tipos,
     $parametros
 );
@@ -51,7 +55,7 @@ $parametros_listado[] = $offset;
 
 $preceptores = db_fetch_all(
     $con,
-    "SELECT p.dni, p.apellido, p.nombre, p.id_persona,
+    "SELECT p.dni, p.apellido, p.nombre, p.id_persona, $expr_activo AS activo,
             GROUP_CONCAT(c.grado,'°', s.seccion, ' ', m.moda SEPARATOR ' | ') AS c_detalle
      FROM personas AS p
      INNER JOIN tipo_persona_x_persona AS ti ON ti.id_persona = p.id_persona
@@ -60,7 +64,7 @@ $preceptores = db_fetch_all(
      INNER JOIN cursos AS c ON c.id_curso = pc.id_curso
      INNER JOIN modalidad AS m ON m.id_modalidad = c.id_modalidad
      INNER JOIN secciones AS s ON s.id_seccion = c.id_seccion
-     WHERE LOWER(t.tipo) = 'preceptor' $filtro_sql
+     WHERE LOWER(t.tipo) = 'preceptor' $filtro_activo_sql $filtro_sql
      GROUP BY p.id_persona, p.dni, p.apellido, p.nombre
      ORDER BY p.apellido ASC, p.nombre ASC
      LIMIT ? OFFSET ?",
@@ -71,6 +75,9 @@ $preceptores = db_fetch_all(
 $parametros_base = [];
 if ($q !== '') {
     $parametros_base['q'] = $q;
+}
+if ($ver_inactivos) {
+    $parametros_base['inactivos'] = '1';
 }
 $url_pagina = static function (int $n) use ($parametros_base): string {
     $p = $parametros_base;
@@ -110,6 +117,10 @@ $msg = trim((string)($_GET['msg'] ?? ''));
         <button type="submit" class="btn-plei-submit btn-filtro">Buscar</button>
         <a href="lista_preceptores.php" class="btn-plei-cancel btn-filtro">Limpiar</a>
       </div>
+      <label class="texto-opcional d-flex align-items-center gap-2">
+        <input type="checkbox" name="inactivos" value="1" <?php echo $ver_inactivos ? 'checked' : ''; ?>>
+        Ver inactivos
+      </label>
     </form>
 
     <div class="resultado-listado-meta">
@@ -124,29 +135,47 @@ $msg = trim((string)($_GET['msg'] ?? ''));
             <th>Nombre</th>
             <th>Apellido</th>
             <th>Cursos a cargo</th>
+            <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($preceptores)): ?>
           <tr>
-            <td colspan="5" class="text-center py-4">No se encontraron preceptores con ese criterio.</td>
+            <td colspan="6" class="text-center py-4">No se encontraron preceptores con ese criterio.</td>
           </tr>
           <?php else: ?>
           <?php foreach ($preceptores as $preceptor): ?>
+          <?php $preceptor_activo = (int)($preceptor['activo'] ?? 1) === 1; ?>
           <tr>
             <td><?php echo htmlspecialchars($preceptor['dni']); ?></td>
             <td><?php echo htmlspecialchars($preceptor['nombre']); ?></td>
             <td><?php echo htmlspecialchars($preceptor['apellido']); ?></td>
             <td><?php echo htmlspecialchars($preceptor['c_detalle']); ?></td>
             <td>
+              <?php if ($preceptor_activo): ?>
+              <span class="role-badge admin" style="font-size:.72rem">Activo</span>
+              <?php else: ?>
+              <span class="role-badge" style="font-size:.72rem;background:#6c757d;color:#fff">Inactivo</span>
+              <?php endif; ?>
+            </td>
+            <td>
               <div class="acciones-tabla">
                 <a href="../modificaciones/editar_preceptor.php?id=<?php echo urlencode($preceptor['id_persona']); ?>" class="btn btn-sm btn-table-edit">Modificar</a>
-                <form method="post" action="../modificaciones/eliminar_preceptor.php" class="form-inline-delete" onsubmit="return confirm('¿Seguro que deseas eliminar este preceptor?');">
+                <?php if ($preceptor_activo): ?>
+                <form method="post" action="../modificaciones/eliminar_preceptor.php" class="form-inline-delete" onsubmit="return confirm('¿Seguro que deseas inactivar este preceptor?');">
                   <?php campo_csrf(); ?>
                   <input type="hidden" name="id" value="<?php echo (int)$preceptor['id_persona']; ?>">
-                  <button type="submit" class="btn btn-sm btn-table-del">Eliminar</button>
+                  <button type="submit" class="btn btn-sm btn-table-del">Inactivar</button>
                 </form>
+                <?php else: ?>
+                <form method="post" action="../modificaciones/reactivar_persona.php" class="form-inline-delete" onsubmit="return confirm('¿Reactivar este preceptor?');">
+                  <?php campo_csrf(); ?>
+                  <input type="hidden" name="id" value="<?php echo (int)$preceptor['id_persona']; ?>">
+                  <input type="hidden" name="volver" value="php/listados/lista_preceptores.php">
+                  <button type="submit" class="btn btn-sm btn-table-edit">Reactivar</button>
+                </form>
+                <?php endif; ?>
               </div>
             </td>
           </tr>

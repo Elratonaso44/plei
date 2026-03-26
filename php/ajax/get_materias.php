@@ -2,14 +2,9 @@
 include '../conesion.php';
 include '../config.php';
 session_start();
+exigir_inicio_sesion();
 
 header('Content-Type: application/json');
-
-if (!isset($_SESSION['id_persona'])) {
-    http_response_code(403);
-    echo '[]';
-    exit;
-}
 
 $id_persona = (int)($_SESSION['id_persona'] ?? 0);
 $id_curso = (int)($_GET['curso'] ?? 0);

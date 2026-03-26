@@ -2,14 +2,9 @@
 include '../conesion.php';
 include '../config.php';
 session_start();
+exigir_inicio_sesion();
 
 header('Content-Type: application/json');
-
-if (!isset($_SESSION['id_persona'])) {
-    http_response_code(403);
-    echo '[]';
-    exit;
-}
 
 $id_persona = (int)($_SESSION['id_persona'] ?? 0);
 $id_curso = (int)($_GET['curso'] ?? 0);
@@ -63,6 +58,7 @@ if (!$es_admin) {
     }
 }
 
+$filtro_activo_alumno = condicion_persona_activa($con, 'p');
 $alumnos = db_fetch_all(
     $con,
     "SELECT DISTINCT p.id_persona, p.nombre, p.apellido, p.dni
@@ -71,6 +67,7 @@ $alumnos = db_fetch_all(
      INNER JOIN tipo_persona_x_persona AS tpp ON tpp.id_persona = p.id_persona
      INNER JOIN tipos_personas AS tp ON tp.id_tipo_persona = tpp.id_tipo_persona
      WHERE LOWER(tp.tipo) = 'alumno'
+       $filtro_activo_alumno
        AND axc.id_curso = ?
        AND p.id_persona NOT IN (
          SELECT id_persona FROM alumnos_x_materia WHERE id_materia = ?

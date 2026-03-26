@@ -1,5 +1,5 @@
 <?php
-include './php/config.php'; session_start(); if(isset($_SESSION['id_persona'])){ if(!empty($_SESSION['forzar_cambio_password'])){ redirigir('php/modificaciones/cambiar_password_obligatorio.php'); } redirigir('home.php'); } $errores = [ 'campos' => 'Completá email y contraseña.', 'usuario' => 'No existe ninguna cuenta con ese email.', 'password' => 'La contraseña es incorrecta.', 'sistema' => 'Error del sistema. Intentá de nuevo.', ]; $error_msg = isset($_GET['error']) ? ($errores[$_GET['error']] ?? '') : ''; ?>
+include './php/config.php'; session_start(); if(isset($_SESSION['id_persona'])){ if(!empty($_SESSION['forzar_cambio_password'])){ redirigir('php/modificaciones/cambiar_password_obligatorio.php'); } redirigir('home.php'); } $errores = [ 'campos' => 'Completá email y contraseña.', 'credenciales' => 'No se pudo iniciar sesión con los datos ingresados.', 'bloqueado' => 'Por seguridad, el acceso fue bloqueado temporalmente. Esperá unos minutos e intentá de nuevo.', 'inactivo' => 'Tu cuenta está inactiva. Contactá a administración.', 'timeout' => 'Tu sesión expiró por inactividad. Iniciá sesión nuevamente.', 'sistema' => 'Error del sistema. Intentá de nuevo.', ]; $error_msg = isset($_GET['error']) ? ($errores[$_GET['error']] ?? '') : ''; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

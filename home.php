@@ -1,5 +1,5 @@
 <?php
-include './php/conesion.php'; include './php/config.php'; include './php/material_url.php'; session_start(); if(!isset($_SESSION['id_persona']) || !isset($_SESSION['username'])){ redirigir('index.php'); } if(!empty($_SESSION['forzar_cambio_password'])){ redirigir('php/modificaciones/cambiar_password_obligatorio.php'); } $id = (int)$_SESSION["id_persona"]; $tipos = db_fetch_all( $con, "SELECT t.tipo
+include './php/conesion.php'; include './php/config.php'; include './php/material_url.php'; session_start(); exigir_inicio_sesion(); $id = (int)$_SESSION["id_persona"]; $tipos = db_fetch_all( $con, "SELECT t.tipo
    FROM tipo_persona_x_persona AS ti
    INNER JOIN personas AS p ON ti.id_persona = p.id_persona
    INNER JOIN tipos_personas AS t ON ti.id_tipo_persona = t.id_tipo_persona
@@ -108,6 +108,14 @@ include './php/conesion.php'; include './php/config.php'; include './php/materia
 
       <?php if($esAdmin || $esPreceptor): ?>
       <span class="sidebar-section-label">Gestion Escolar</span>
+      <?php if($esAdmin): ?>
+      <a class="sidebar-link" href="./php/boletin/admin_ciclos_periodos.php">
+        <i class="bi bi-journal-check"></i> Ciclos y periodos boletin
+      </a>
+      <a class="sidebar-link" href="./php/boletin/admin_config_boletin_anual.php">
+        <i class="bi bi-sliders2"></i> Configuracion boletin anual
+      </a>
+      <?php endif; ?>
       <div class="sidebar-tree-item">
         <button class="sidebar-tree-toggle">
           <i class="bi bi-mortarboard-fill icon-main"></i>
@@ -176,6 +184,9 @@ include './php/conesion.php'; include './php/config.php'; include './php/materia
       <a class="sidebar-link" href="./php/listados/ver_mis_alumnos.php">
         <i class="bi bi-person-lines-fill"></i> Ver mis alumnos
       </a>
+      <a class="sidebar-link" href="./php/boletin/docente_boletin.php">
+        <i class="bi bi-journal-bookmark-fill"></i> Boletin digital
+      </a>
       <a class="sidebar-link" href="./php/listados/lista_materiax_docente.php">
         <i class="bi bi-journal-bookmark-fill"></i> Ver mis materias
       </a>
@@ -189,6 +200,15 @@ include './php/conesion.php'; include './php/config.php'; include './php/materia
       <a class="sidebar-link" href="./php/listados/lista_cursos_a_cargo.php">
         <i class="bi bi-house-door-fill"></i> Mis cursos a cargo
       </a>
+      <a class="sidebar-link" href="./php/boletin/preceptor_boletines.php">
+        <i class="bi bi-clipboard2-check"></i> Boletines por curso
+      </a>
+      <a class="sidebar-link" href="./php/boletin/preceptor_asignar_grupos.php">
+        <i class="bi bi-diagram-3-fill"></i> Asignar grupos de taller
+      </a>
+      <a class="sidebar-link" href="./php/boletin/preceptor_complemento_anual.php">
+        <i class="bi bi-table"></i> Cierre/complemento anual
+      </a>
       <a class="sidebar-link" href="./php/modificaciones/editar_perfil.php">
         <i class="bi bi-pencil-square"></i> Editar mi perfil
       </a>
@@ -198,6 +218,9 @@ include './php/conesion.php'; include './php/config.php'; include './php/materia
       <span class="sidebar-section-label">Mi espacio</span>
       <a class="sidebar-link" href="./php/listados/lista_materias_asignadas.php">
         <i class="bi bi-book-half"></i> Mis materias
+      </a>
+      <a class="sidebar-link" href="./php/boletin/alumno_mi_boletin.php">
+        <i class="bi bi-file-earmark-text-fill"></i> Mi boletin
       </a>
       <a class="sidebar-link" href="./php/listados/lista_material_asignado.php">
         <i class="bi bi-files"></i> Mis materiales
@@ -301,6 +324,7 @@ include './php/conesion.php'; include './php/config.php'; include './php/materia
 
   <?php elseif($esDocente): ?>
   <div class="action-grid">
+    <a href="./php/boletin/docente_boletin.php" class="action-card"><div class="ac-icon"><i class="bi bi-journal-check"></i></div><div class="ac-title">Boletin digital</div><div class="ac-desc">Cargar notas por periodo y materia.</div></a>
     <a href="./php/listados/lista_materiax_docente.php" class="action-card"><div class="ac-icon"><i class="bi bi-journal-bookmark-fill"></i></div><div class="ac-title">Mis materias</div><div class="ac-desc">Ver las materias que tenes asignadas.</div></a>
     <a href="./php/listados/ver_mis_alumnos.php" class="action-card"><div class="ac-icon"><i class="bi bi-person-lines-fill"></i></div><div class="ac-title">Mis alumnos</div><div class="ac-desc">Ver alumnos inscriptos en tus materias.</div></a>
     <a href="./php/altas/materiales.php" class="action-card"><div class="ac-icon"><i class="bi bi-file-earmark-plus-fill"></i></div><div class="ac-title">Subir material</div><div class="ac-desc">Agregar un nuevo recurso para tus alumnos.</div></a>
@@ -310,6 +334,8 @@ include './php/conesion.php'; include './php/config.php'; include './php/materia
 
   <?php elseif($esPreceptor): ?>
   <div class="action-grid">
+    <a href="./php/boletin/preceptor_boletines.php" class="action-card"><div class="ac-icon"><i class="bi bi-clipboard2-check"></i></div><div class="ac-title">Boletines</div><div class="ac-desc">Abrir, revisar y publicar boletines.</div></a>
+    <a href="./php/boletin/preceptor_asignar_grupos.php" class="action-card"><div class="ac-icon"><i class="bi bi-diagram-3-fill"></i></div><div class="ac-title">Grupos de taller</div><div class="ac-desc">Asignar alumnos por grupo de materia.</div></a>
     <a href="./php/listados/lista_cursos_a_cargo.php" class="action-card"><div class="ac-icon"><i class="bi bi-house-door-fill"></i></div><div class="ac-title">Mis cursos</div><div class="ac-desc">Ver los cursos que tenes a cargo.</div></a>
     <a href="./php/listados/lista_alumnos.php" class="action-card"><div class="ac-icon"><i class="bi bi-people-fill"></i></div><div class="ac-title">Ver alumnos</div><div class="ac-desc">Listado completo de alumnos.</div></a>
     <a href="./php/modificaciones/editar_perfil.php" class="action-card"><div class="ac-icon"><i class="bi bi-person-circle"></i></div><div class="ac-title">Mi perfil</div><div class="ac-desc">Actualizá tus datos personales.</div></a>
@@ -317,12 +343,19 @@ include './php/conesion.php'; include './php/config.php'; include './php/materia
 
   <?php elseif($esAdmin): ?>
   <div class="action-grid">
+    <a href="./php/boletin/admin_ciclos_periodos.php" class="action-card"><div class="ac-icon"><i class="bi bi-journal-check"></i></div><div class="ac-title">Ciclos boletin</div><div class="ac-desc">Gestionar ciclos y periodos de boletin.</div></a>
     <a href="./php/altas/register.php" class="action-card"><div class="ac-icon"><i class="bi bi-person-plus-fill"></i></div><div class="ac-title">Registrar usuario</div><div class="ac-desc">Crear una nueva cuenta en el sistema.</div></a>
     <a href="./php/listados/lista_personas.php" class="action-card"><div class="ac-icon"><i class="bi bi-people-fill"></i></div><div class="ac-title">Lista de personas</div><div class="ac-desc">Ver y gestionar todos los usuarios.</div></a>
     <a href="./php/listados/lista_docentes.php" class="action-card"><div class="ac-icon"><i class="bi bi-mortarboard-fill"></i></div><div class="ac-title">Docentes</div><div class="ac-desc">Gestionar el cuerpo docente.</div></a>
     <a href="./php/listados/lista_preceptores.php" class="action-card"><div class="ac-icon"><i class="bi bi-person-badge-fill"></i></div><div class="ac-title">Preceptores</div><div class="ac-desc">Asignar y ver preceptores por curso.</div></a>
     <a href="./php/altas/cursos.php" class="action-card"><div class="ac-icon"><i class="bi bi-calendar3-fill"></i></div><div class="ac-title">Cursos</div><div class="ac-desc">Crear y gestionar cursos.</div></a>
     <a href="./php/listados/lista_materias.php" class="action-card"><div class="ac-icon"><i class="bi bi-book-fill"></i></div><div class="ac-title">Materias</div><div class="ac-desc">Ver y gestionar todas las materias.</div></a>
+  </div>
+  <?php endif; ?>
+
+  <?php if($esAlumno): ?>
+  <div class="action-grid" style="margin-top:1rem">
+    <a href="./php/boletin/alumno_mi_boletin.php" class="action-card"><div class="ac-icon"><i class="bi bi-file-earmark-text-fill"></i></div><div class="ac-title">Mi boletin</div><div class="ac-desc">Descargar boletines publicados en PDF.</div></a>
   </div>
   <?php endif; ?>
 

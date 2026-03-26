@@ -52,6 +52,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $error_form = 'No tenés permisos para inscribir alumnos en ese curso.';
     } elseif (!persona_tiene_tipo($con, $persona_sel, 'alumno')) {
         $error_form = 'La persona seleccionada no tiene tipo alumno.';
+    } elseif (!persona_esta_activa($con, $persona_sel)) {
+        $error_form = 'La persona seleccionada está inactiva.';
     } else {
         $curso_actual = db_fetch_one(
             $con,
@@ -130,6 +132,7 @@ if ($curso_sel > 0) {
 }
 
 if ($persona_sel > 0) {
+    $filtro_activo_alumno = condicion_persona_activa($con, 'p');
     $alumno_info = db_fetch_one(
         $con,
         "SELECT p.id_persona, p.apellido, p.nombre, p.dni
@@ -137,6 +140,7 @@ if ($persona_sel > 0) {
          INNER JOIN tipo_persona_x_persona AS tpp ON tpp.id_persona = p.id_persona
          INNER JOIN tipos_personas AS tp ON tp.id_tipo_persona = tpp.id_tipo_persona
          WHERE p.id_persona = ? AND LOWER(tp.tipo) = 'alumno'
+           $filtro_activo_alumno
          LIMIT 1",
         'i',
         [$persona_sel]

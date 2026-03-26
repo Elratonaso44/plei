@@ -16,6 +16,7 @@ $prefill_curso = ['id' => 0, 'label' => '', 'extra' => ''];
 $prefill_materia = ['id' => 0, 'label' => '', 'extra' => '', 'grupos' => []];
 $prefill_docente = ['id' => 0, 'label' => '', 'extra' => ''];
 $prefill_grupo = 0;
+$filtro_activo_docente = condicion_persona_activa($con, 'p');
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     verificar_csrf();
@@ -90,6 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
              INNER JOIN tipos_personas AS t ON t.id_tipo_persona = ti.id_tipo_persona
              WHERE p.id_persona = ?
                AND LOWER(TRIM(t.tipo)) = 'docente'
+               $filtro_activo_docente
              LIMIT 1",
             "i",
             [$id_docente]

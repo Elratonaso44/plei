@@ -5,11 +5,14 @@ session_start();
 exigir_rol('administrador');
 
 $q = trim((string)($_GET['q'] ?? ''));
+$ver_inactivos = solicitud_ver_inactivos();
 $pagina = max(1, (int)($_GET['page'] ?? 1));
 $por_pagina = 20;
 $offset = ($pagina - 1) * $por_pagina;
 
 $filtro_sql = '';
+$filtro_activo_sql = condicion_persona_activa($con, 'p', $ver_inactivos);
+$expr_activo = expresion_persona_activo($con, 'p');
 $tipos = '';
 $parametros = [];
 
@@ -33,7 +36,7 @@ $total_row = db_fetch_one(
      INNER JOIN tipo_persona_x_persona AS tp ON tp.id_persona = p.id_persona
      INNER JOIN tipos_personas AS t ON tp.id_tipo_persona = t.id_tipo_persona
      INNER JOIN roles AS r ON r.id_rol = p.id_rol
-     WHERE 1=1 $filtro_sql",
+     WHERE 1=1 $filtro_activo_sql $filtro_sql",
     $tipos,
     $parametros
 );
@@ -51,13 +54,13 @@ $parametros_listado[] = $offset;
 
 $personas = db_fetch_all(
     $con,
-    "SELECT p.id_persona, p.dni, p.apellido, p.nombre, p.mail, p.usuario, r.rol,
+    "SELECT p.id_persona, p.dni, p.apellido, p.nombre, p.mail, p.usuario, r.rol, $expr_activo AS activo,
             GROUP_CONCAT(t.tipo SEPARATOR ' | ') AS tipo
      FROM personas AS p
      INNER JOIN tipo_persona_x_persona AS tp ON tp.id_persona = p.id_persona
      INNER JOIN tipos_personas AS t ON tp.id_tipo_persona = t.id_tipo_persona
      INNER JOIN roles AS r ON r.id_rol = p.id_rol
-     WHERE 1=1 $filtro_sql
+     WHERE 1=1 $filtro_activo_sql $filtro_sql
      GROUP BY p.id_persona, p.dni, p.apellido, p.nombre, p.mail, p.usuario, r.rol
      ORDER BY p.apellido ASC, p.nombre ASC
      LIMIT ? OFFSET ?",
@@ -68,6 +71,9 @@ $personas = db_fetch_all(
 $parametros_base = [];
 if ($q !== '') {
     $parametros_base['q'] = $q;
+}
+if ($ver_inactivos) {
+    $parametros_base['inactivos'] = '1';
 }
 $url_pagina = static function (int $n) use ($parametros_base): string {
     $p = $parametros_base;
@@ -107,6 +113,10 @@ $msg = trim((string)($_GET['msg'] ?? ''));
         <button type="submit" class="btn-plei-submit btn-filtro">Buscar</button>
         <a href="lista_personas.php" class="btn-plei-cancel btn-filtro">Limpiar</a>
       </div>
+      <label class="texto-opcional d-flex align-items-center gap-2">
+        <input type="checkbox" name="inactivos" value="1" <?php echo $ver_inactivos ? 'checked' : ''; ?>>
+        Ver inactivos
+      </label>
     </form>
 
     <div class="resultado-listado-meta">
@@ -123,16 +133,18 @@ $msg = trim((string)($_GET['msg'] ?? ''));
             <th>Email</th>
             <th>Tipo</th>
             <th>Rol</th>
+            <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($personas)): ?>
           <tr>
-            <td colspan="7" class="text-center py-4">No se encontraron personas con ese criterio.</td>
+            <td colspan="8" class="text-center py-4">No se encontraron personas con ese criterio.</td>
           </tr>
           <?php else: ?>
           <?php foreach ($personas as $persona): ?>
+          <?php $persona_activa = (int)($persona['activo'] ?? 1) === 1; ?>
           <tr>
             <td><?php echo htmlspecialchars($persona['dni']); ?></td>
             <td><?php echo htmlspecialchars($persona['nombre']); ?></td>
@@ -141,13 +153,29 @@ $msg = trim((string)($_GET['msg'] ?? ''));
             <td><?php echo htmlspecialchars($persona['tipo']); ?></td>
             <td><?php echo htmlspecialchars($persona['rol']); ?></td>
             <td>
+              <?php if ($persona_activa): ?>
+              <span class="role-badge admin" style="font-size:.72rem">Activo</span>
+              <?php else: ?>
+              <span class="role-badge" style="font-size:.72rem;background:#6c757d;color:#fff">Inactivo</span>
+              <?php endif; ?>
+            </td>
+            <td>
               <div class="acciones-tabla">
                 <a href="../modificaciones/editar_persona.php?id=<?php echo urlencode($persona['id_persona']); ?>" class="btn btn-sm btn-table-edit">Modificar</a>
-                <form method="post" action="../modificaciones/eliminar_persona.php" class="form-inline-delete" onsubmit="return confirm('¿Seguro que deseas eliminar esta persona?');">
+                <?php if ($persona_activa): ?>
+                <form method="post" action="../modificaciones/eliminar_persona.php" class="form-inline-delete" onsubmit="return confirm('¿Seguro que deseas inactivar esta persona?');">
                   <?php campo_csrf(); ?>
                   <input type="hidden" name="id" value="<?php echo (int)$persona['id_persona']; ?>">
-                  <button type="submit" class="btn btn-sm btn-table-del">Eliminar</button>
+                  <button type="submit" class="btn btn-sm btn-table-del">Inactivar</button>
                 </form>
+                <?php else: ?>
+                <form method="post" action="../modificaciones/reactivar_persona.php" class="form-inline-delete" onsubmit="return confirm('¿Reactivar esta persona?');">
+                  <?php campo_csrf(); ?>
+                  <input type="hidden" name="id" value="<?php echo (int)$persona['id_persona']; ?>">
+                  <input type="hidden" name="volver" value="php/listados/lista_personas.php">
+                  <button type="submit" class="btn btn-sm btn-table-edit">Reactivar</button>
+                </form>
+                <?php endif; ?>
               </div>
             </td>
           </tr>

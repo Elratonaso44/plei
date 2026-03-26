@@ -1,14 +1,52 @@
 <?php
-include "../conesion.php"; include "../config.php"; session_start(); exigir_rol('administrador'); $preceptores = db_fetch_all($con, "SELECT p.id_persona, p.nombre, p.apellido
+include "../conesion.php";
+include "../config.php";
+session_start();
+exigir_rol('administrador');
+
+$filtro_activo_preceptor = condicion_persona_activa($con, 'p');
+$preceptores = db_fetch_all(
+    $con,
+    "SELECT p.id_persona, p.nombre, p.apellido
      FROM personas AS p
-     INNER JOIN tipo_persona_x_persona as ti ON ti.id_persona = p.id_persona
-     INNER JOIN tipos_personas as t ON t.id_tipo_persona = ti.id_tipo_persona
-     WHERE LOWER(t.tipo) = 'preceptor'
-     ORDER BY p.apellido"); $cursos = db_fetch_all($con, "SELECT c.id_curso, c.grado, s.seccion, m.moda
-     FROM cursos as c
-     INNER JOIN secciones as s ON s.id_seccion = c.id_seccion
-     INNER JOIN modalidad as m ON m.id_modalidad = c.id_modalidad
-     ORDER BY c.grado"); if ($_SERVER["REQUEST_METHOD"] === "POST") { verificar_csrf(); $id_preceptor = intval($_POST["preceptor"] ?? 0); $ids_cursos = array_map('intval', (array)($_POST["curso"] ?? [])); if ($id_preceptor && !empty($ids_cursos)) { foreach ($ids_cursos as $id_curso) { if ($id_curso <= 0) continue; $stmt = mysqli_prepare($con, "INSERT INTO preceptor_x_curso (id_persona, id_curso) VALUES (?, ?)"); if ($stmt) { mysqli_stmt_bind_param($stmt, "ii", $id_preceptor, $id_curso); mysqli_stmt_execute($stmt); mysqli_stmt_close($stmt); } } redirigir('php/listados/lista_preceptores.php'); } } ?>
+     INNER JOIN tipo_persona_x_persona AS ti ON ti.id_persona = p.id_persona
+     INNER JOIN tipos_personas AS t ON t.id_tipo_persona = ti.id_tipo_persona
+     WHERE LOWER(t.tipo) = 'preceptor' $filtro_activo_preceptor
+     ORDER BY p.apellido"
+);
+
+$cursos = db_fetch_all(
+    $con,
+    "SELECT c.id_curso, c.grado, s.seccion, m.moda
+     FROM cursos AS c
+     INNER JOIN secciones AS s ON s.id_seccion = c.id_seccion
+     INNER JOIN modalidad AS m ON m.id_modalidad = c.id_modalidad
+     ORDER BY c.grado"
+);
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    verificar_csrf();
+    $id_preceptor = (int)($_POST["preceptor"] ?? 0);
+    $ids_cursos = array_map('intval', (array)($_POST["curso"] ?? []));
+    if ($id_preceptor && !empty($ids_cursos)) {
+        if (!persona_esta_activa($con, $id_preceptor)) {
+            redirigir('php/altas/preceptor_x_curso.php?estado=err&msg=' . urlencode('No se puede asignar un preceptor inactivo.'));
+        }
+        foreach ($ids_cursos as $id_curso) {
+            if ($id_curso <= 0) {
+                continue;
+            }
+            $stmt = mysqli_prepare($con, "INSERT INTO preceptor_x_curso (id_persona, id_curso) VALUES (?, ?)");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "ii", $id_preceptor, $id_curso);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_close($stmt);
+            }
+        }
+        redirigir('php/listados/lista_preceptores.php');
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

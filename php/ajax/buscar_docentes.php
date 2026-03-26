@@ -2,14 +2,9 @@
 include '../conesion.php';
 include '../config.php';
 session_start();
+exigir_inicio_sesion();
 
 header('Content-Type: application/json; charset=UTF-8');
-
-if (!isset($_SESSION['id_persona'])) {
-    http_response_code(403);
-    echo '[]';
-    exit;
-}
 
 $id_persona = (int)($_SESSION['id_persona'] ?? 0);
 $tipos_usuario = obtener_tipos_usuario($con, $id_persona);
@@ -38,6 +33,7 @@ if (strlen($q) < 2) {
 }
 
 $like = valor_like($q);
+$filtro_activo_docente = condicion_persona_activa($con, 'p');
 
 $docentes = db_fetch_all(
     $con,
@@ -48,6 +44,7 @@ $docentes = db_fetch_all(
      INNER JOIN tipo_persona_x_persona AS tpp ON tpp.id_persona = p.id_persona
      INNER JOIN tipos_personas AS tp ON tp.id_tipo_persona = tpp.id_tipo_persona
      WHERE LOWER(tp.tipo) = 'docente'
+       $filtro_activo_docente
        AND (
            CAST(p.dni AS CHAR) LIKE ? ESCAPE '\\\\'
         OR p.apellido LIKE ? ESCAPE '\\\\'
